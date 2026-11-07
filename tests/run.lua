@@ -17,6 +17,34 @@ local list = c.list()
 assert(#list == 1 and list[1].start_line == 3 and list[1].end_line == 4, vim.inspect(list))
 local msg = c.format(list, "/p")
 assert(msg:find("1. f.lua:3-4", 1, true) and msg:find("   > b\n   > c\n", 1, true) and msg:find("Comment: why?", 1, true), msg)
+-- edit keeps the anchor and text tracks; delete removes only that one
+c.edit(list[1], "really?")
+vim.api.nvim_buf_set_lines(buf, 0, 0, false, { "new2" })
+list = c.list()
+assert(#list == 1 and list[1].text == "really?" and list[1].start_line == 4, vim.inspect(list))
+c.add(buf, 1, 1, "top")
+assert(#c.at(buf, 4) == 1 and #c.at(buf, 1) == 1 and #c.at(buf, 3) == 0)
+c.delete(c.at(buf, 1)[1])
+assert(#c.list() == 1 and c.list()[1].text == "really?")
+
+-- :Relay edit / delete via the cursor and via the quickfix list
+local r = require("rex-relay")
+vim.api.nvim_set_current_buf(buf)
+vim.api.nvim_win_set_cursor(0, { 5, 0 })
+vim.ui.input = function(_, cb) cb("edited") end
+r.edit()
+assert(c.list()[1].text == "edited")
+c.add(buf, 5, 5, "overlap")
+vim.ui.select = function(items, _, cb) cb(items[2]) end
+r.delete() -- two comments cover line 5; picker chooses the second
+assert(#c.list() == 1)
+r.list()
+assert(vim.bo.buftype == "quickfix" and #vim.fn.getqflist() == 1)
+r.delete()
+assert(#c.list() == 0 and #vim.fn.getqflist() == 0, "qf not refreshed")
+vim.cmd("cclose")
+
+c.add(buf, 1, 1, "x")
 c.clear()
 assert(#c.list() == 0)
 print("ok")

@@ -46,12 +46,16 @@ opts = {
 | --- | --- | --- |
 | `<leader>ai` | `:[range]Relay ref` | type `path:12` (`path:12-20` for a range) at the agent's cursor; never submits |
 | `<leader>ac` | `:[range]Relay comment` | comment the line / selection |
+| `<leader>ae` | `:Relay edit` | edit the comment under the cursor |
+| `<leader>ad` | `:Relay delete` | delete the comment under the cursor |
 | `<leader>al` | `:Relay list` | comments in the quickfix list |
 | `<leader>as` | `:Relay send` | paste all comments into the agent's input, then clear them |
 | `<leader>aS` | `:Relay submit` | same, and press Enter |
 | | `:Relay clear` | drop all comments |
 
-Comments are kept in memory only and follow your edits. Paths are relative to
+`edit` and `delete` also work on the entry under the cursor in `:Relay list`.
+If several comments cover a line, they ask which one. Comments are kept in
+memory only and follow your edits. Paths are relative to
 the agent's working directory. See `:help rex-relay`.
 
 ## How it works
