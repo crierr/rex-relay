@@ -53,8 +53,8 @@ opts = {
 | `<leader>aS` | `:Relay submit` | same, and press Enter |
 | | `:Relay clear` | drop all comments |
 
-`edit` and `delete` also work on the entry under the cursor in `:Relay list`.
-If several comments cover a line, they ask which one. Comments are kept in
+In `:Relay list`, `e` edits and `d` deletes the entry under the cursor.
+Edit and delete ask which one when several comments cover a line. Comments are kept in
 memory only and follow your edits. Paths are relative to
 the agent's working directory. See `:help rex-relay`.
 

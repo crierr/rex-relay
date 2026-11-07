@@ -32,9 +32,9 @@ COMMANDS                                                 *:Relay*
 :[range]Relay comment   Comment the line or range.    (<prefix>c)
 :Relay edit             Edit the comment under the cursor. (<prefix>e)
 :Relay delete           Delete the comment under the cursor. (<prefix>d)
-                        Both also work on the entry under the cursor in
-                        the quickfix list, and ask which comment when
-                        several cover the line.
+                        Both ask which comment when several cover the
+                        line. In the |:Relay| list window, `e` and `d` do
+                        the same for the entry under the cursor.
 :Relay list             Comments in the quickfix list. (<prefix>l)
 :Relay send             Paste all comments into the agent's input, then
                         clear them.                   (<prefix>s)

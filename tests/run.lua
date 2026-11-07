@@ -40,9 +40,21 @@ r.delete() -- two comments cover line 5; picker chooses the second
 assert(#c.list() == 1)
 r.list()
 assert(vim.bo.buftype == "quickfix" and #vim.fn.getqflist() == 1)
-r.delete()
-assert(#c.list() == 0 and #vim.fn.getqflist() == 0, "qf not refreshed")
+assert(vim.fn.getline(1):find("f.lua|", 1, true), "qf line lacks filename: " .. vim.fn.getline(1))
+assert(vim.api.nvim_eval_statusline(vim.wo.winbar, { winid = 0, use_winbar = true }).str:find("e: edit", 1, true), "winbar hint")
+vim.ui.input = function(_, cb) cb("via e") end
+vim.api.nvim_feedkeys("e", "x", false)
+assert(c.list()[1].text == "via e" and vim.fn.getqflist()[1].text == "via e", "qf e")
+vim.api.nvim_feedkeys("d", "x", false)
+assert(#c.list() == 0 and #vim.fn.getqflist() == 0, "qf d / not refreshed")
+-- another list in the same window: keys fall back to builtins
+c.add(buf, 1, 1, "keep")
+vim.fn.setqflist({}, " ", { title = "grep", items = { { bufnr = buf, lnum = 1, text = "hit" } } })
+vim.api.nvim_feedkeys("d", "x", false)
+assert(#c.list() == 1, "d acted outside our list")
+assert(require("rex-relay").qf_winbar() == "", "hint shown on another list")
 vim.cmd("cclose")
+c.clear()
 
 c.add(buf, 1, 1, "x")
 c.clear()

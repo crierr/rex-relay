@@ -35,16 +35,32 @@ function M.send(submit)
   end)
 end
 
+local QF_TITLE = "rex-relay comments"
+
+-- Key hint for the list window's winbar (statuslines often hide the qf
+-- title, e.g. LazyVim's global lualine). Empty once another list replaces ours.
+function M.qf_winbar()
+  return vim.fn.getqflist({ title = 0 }).title == QF_TITLE and " e: edit  d: delete  <CR>: jump" or ""
+end
+
 local function qf_items()
   return vim.tbl_map(function(c)
-    return { bufnr = c.bufnr, lnum = c.start_line, end_lnum = c.end_line, text = c.text }
+    return { bufnr = c.bufnr, filename = c.file, lnum = c.start_line, end_lnum = c.end_line, text = c.text }
   end, comments.list())
 end
 
 -- Comments into the quickfix list for review/jumping.
 function M.list()
-  vim.fn.setqflist({}, " ", { title = "rex-relay comments", items = qf_items() })
+  vim.fn.setqflist({}, " ", { title = QF_TITLE, items = qf_items() })
   vim.cmd("copen")
+  vim.wo.winbar = "%{%v:lua.require'rex-relay'.qf_winbar()%}"
+  -- The quickfix buffer is reused by other lists (grep, LSP...), so the keys
+  -- fall back to their builtin meaning unless our list is showing.
+  for key, sub in pairs({ e = "edit", d = "delete" }) do
+    vim.keymap.set("n", key, function()
+      return vim.fn.getqflist({ title = 0 }).title == QF_TITLE and ("<cmd>Relay " .. sub .. "<cr>") or key
+    end, { buffer = true, expr = true, desc = "Relay: " .. sub .. " comment" })
+  end
 end
 
 -- Run fn on the comment under the cursor (or under the quickfix entry), asking
@@ -59,7 +75,7 @@ local function on_comment(verb, fn)
   end
   local function run(c)
     fn(c)
-    if in_qf and vim.fn.getqflist({ title = 0 }).title == "rex-relay comments" then
+    if in_qf and vim.fn.getqflist({ title = 0 }).title == QF_TITLE then
       vim.fn.setqflist({}, "r", { items = qf_items() })
     end
   end
