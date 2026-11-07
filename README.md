@@ -2,7 +2,7 @@
 
 Send `file:line` references and review comments from Neovim to CLI coding
 agents (Claude Code, Pi, OpenCode, …) running in other panes of the same
-Rex session.
+[Rex](https://www.superlogical.com/rex) session.
 
 ## Features
 
