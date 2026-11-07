@@ -11,6 +11,27 @@ local function write(agent, text, submit)
   return ok
 end
 
+local QF_TITLE = "rex-relay comments"
+
+local function ours() return vim.fn.getqflist({ title = 0 }).title == QF_TITLE end
+
+-- Key hint for the list window's winbar (statuslines often hide the qf
+-- title, e.g. LazyVim's global lualine). Empty once another list replaces ours.
+function M.qf_winbar()
+  return ours() and " e: edit  d: delete  <CR>: jump" or ""
+end
+
+local function qf_items()
+  return vim.tbl_map(function(c)
+    return { bufnr = c.bufnr, filename = c.file, lnum = c.start_line, end_lnum = c.end_line, text = c.text }
+  end, comments.list())
+end
+
+-- Rewrite our quickfix list in place after any change, if it's the current list.
+local function refresh()
+  if ours() then vim.fn.setqflist({}, "r", { items = qf_items() }) end
+end
+
 -- Drop `path:line ` at the agent's cursor; never submits.
 function M.ref(s, e)
   local file = vim.api.nvim_buf_get_name(0)
@@ -21,7 +42,10 @@ end
 function M.comment(s, e)
   local bufnr = vim.api.nvim_get_current_buf()
   vim.ui.input({ prompt = "Comment: " }, function(text)
-    if text and text ~= "" then comments.add(bufnr, s, e, text) end
+    if text and text ~= "" then
+      comments.add(bufnr, s, e, text)
+      refresh()
+    end
   end)
 end
 
@@ -30,23 +54,9 @@ function M.send(submit)
   if #list == 0 then return vim.notify("rex-relay: no comments to send") end
   rex.with_agent(function(a)
     if not write(a, comments.format(list, a.cwd), submit) then return end
-    comments.clear()
+    M.clear()
     vim.notify(string.format("rex-relay: sent %d comment(s) to %s", #list, a.app))
   end)
-end
-
-local QF_TITLE = "rex-relay comments"
-
--- Key hint for the list window's winbar (statuslines often hide the qf
--- title, e.g. LazyVim's global lualine). Empty once another list replaces ours.
-function M.qf_winbar()
-  return vim.fn.getqflist({ title = 0 }).title == QF_TITLE and " e: edit  d: delete  <CR>: jump" or ""
-end
-
-local function qf_items()
-  return vim.tbl_map(function(c)
-    return { bufnr = c.bufnr, filename = c.file, lnum = c.start_line, end_lnum = c.end_line, text = c.text }
-  end, comments.list())
 end
 
 -- Comments into the quickfix list for review/jumping.
@@ -58,47 +68,49 @@ function M.list()
   -- fall back to their builtin meaning unless our list is showing.
   for key, sub in pairs({ e = "edit", d = "delete" }) do
     vim.keymap.set("n", key, function()
-      return vim.fn.getqflist({ title = 0 }).title == QF_TITLE and ("<cmd>Relay " .. sub .. "<cr>") or key
+      return ours() and ("<cmd>Relay " .. sub .. "<cr>") or key
     end, { buffer = true, expr = true, desc = "Relay: " .. sub .. " comment" })
   end
 end
 
 -- Run fn on the comment under the cursor (or under the quickfix entry), asking
--- when several overlap. Refreshes our quickfix list if that's where we are.
+-- when several overlap.
 local function on_comment(verb, fn)
   local bufnr, line = vim.api.nvim_get_current_buf(), vim.fn.line(".")
-  local in_qf = vim.bo.buftype == "quickfix"
-  if in_qf then
+  if vim.bo.buftype == "quickfix" then
     local item = vim.fn.getqflist()[line]
     if not item then return end
     bufnr, line = item.bufnr, item.lnum
   end
-  local function run(c)
-    fn(c)
-    if in_qf and vim.fn.getqflist({ title = 0 }).title == QF_TITLE then
-      vim.fn.setqflist({}, "r", { items = qf_items() })
-    end
-  end
   local found = comments.at(bufnr, line)
   if #found == 0 then return vim.notify("rex-relay: no comment here") end
-  if #found == 1 then return run(found[1]) end
+  if #found == 1 then return fn(found[1]) end
   vim.ui.select(found, { prompt = verb .. " comment", format_item = function(c) return c.text end },
-    function(c) if c then run(c) end end)
+    function(c) if c then fn(c) end end)
 end
 
 function M.edit()
   on_comment("Edit", function(c)
     vim.ui.input({ prompt = "Comment: ", default = c.text }, function(text)
-      if text and text ~= "" then comments.edit(c, text) end
+      if text and text ~= "" then
+        comments.edit(c, text)
+        refresh()
+      end
     end)
   end)
 end
 
 function M.delete()
-  on_comment("Delete", comments.delete)
+  on_comment("Delete", function(c)
+    comments.delete(c)
+    refresh()
+  end)
 end
 
-M.clear = comments.clear
+function M.clear()
+  comments.clear()
+  refresh()
+end
 
 -- :Relay subcommands; registered by plugin/rex-relay.lua.
 M.subcommands = {

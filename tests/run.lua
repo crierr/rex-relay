@@ -56,6 +56,28 @@ assert(require("rex-relay").qf_winbar() == "", "hint shown on another list")
 vim.cmd("cclose")
 c.clear()
 
+-- list stays current when changes happen from the code window, incl. async input
+local function qf_texts() return vim.tbl_map(function(i) return i.text end, vim.fn.getqflist()) end
+vim.api.nvim_set_current_buf(buf)
+vim.api.nvim_win_set_cursor(0, { 2, 0 })
+r.list()
+vim.cmd("wincmd p") -- back to the code window, list stays open
+local pending
+vim.ui.input = function(_, cb) pending = cb end -- like snacks/dressing: answers later
+r.comment(2, 2)
+pending("added")
+assert(vim.deep_equal(qf_texts(), { "added" }), vim.inspect(qf_texts()))
+r.edit()
+pending("changed")
+assert(vim.deep_equal(qf_texts(), { "changed" }), vim.inspect(qf_texts()))
+r.delete()
+assert(#vim.fn.getqflist() == 0, "delete not refreshed")
+r.comment(2, 2)
+pending("again")
+r.clear()
+assert(#vim.fn.getqflist() == 0, "clear not refreshed")
+vim.cmd("cclose")
+
 c.add(buf, 1, 1, "x")
 c.clear()
 assert(#c.list() == 0)
