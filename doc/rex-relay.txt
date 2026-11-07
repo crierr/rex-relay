@@ -1,0 +1,41 @@
+*rex-relay.txt*  Send file:line refs and review comments to agents in Rex
+
+https://github.com/crierr/rex-relay
+
+==============================================================================
+INTRODUCTION                                                       *rex-relay*
+
+Sends `path:line` references and review comments from Neovim to CLI agents
+(Claude Code, Pi, OpenCode, ...) running in other panes of the same Rex
+session. Nvim must run inside a Rex terminal ($REX_SESSION and $REX_BLOCK
+set) with `rex` on $PATH. Check with |:checkhealth| rex-relay.
+
+The target is the only agent in this tab, else the only agent in the
+session; otherwise you pick one.
+
+==============================================================================
+SETUP                                                    *rex-relay-setup*
+
+>lua
+    require("rex-relay").setup({
+      prefix = "<leader>a", -- keymap prefix
+      keymaps = true,       -- set the default keymaps below
+    })
+<
+:Relay works without calling setup(); setup() only adds keymaps.
+
+==============================================================================
+COMMANDS                                                 *:Relay*
+
+:[range]Relay ref       Type `path:12` (or `path:12-20`) at the agent's
+                        cursor. Never submits.        (<prefix>i)
+:[range]Relay comment   Comment the line or range.    (<prefix>c)
+:Relay list             Comments in the quickfix list. (<prefix>l)
+:Relay send             Paste all comments into the agent's input, then
+                        clear them.                   (<prefix>s)
+:Relay submit           Same, then press Enter.       (<prefix>S)
+:Relay clear            Drop all comments.
+
+Comments are in memory only and follow your edits.
+
+ vim:tw=78:ts=8:ft=help:norl:
