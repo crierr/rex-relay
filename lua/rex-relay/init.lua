@@ -32,11 +32,16 @@ local function refresh()
   if ours() then vim.fn.setqflist({}, "r", { items = qf_items() }) end
 end
 
--- Drop `path:line ` at the agent's cursor; never submits.
-function M.ref(s, e)
+-- Drop `path:line ` at the agent's cursor; never submits. With focus, also
+-- move Rex's focus to the agent so you can keep typing there.
+function M.ref(s, e, focus)
   local file = vim.api.nvim_buf_get_name(0)
   if file == "" then return vim.notify("rex-relay: buffer has no file", vim.log.levels.WARN) end
-  rex.with_agent(function(a) write(a, comments.location(file, s, e, a.cwd) .. " ", false) end)
+  rex.with_agent(function(a)
+    if not write(a, comments.location(file, s, e, a.cwd) .. " ", false) or not focus then return end
+    local ok, err = rex.focus(a)
+    if not ok then vim.notify("rex-relay: " .. err, vim.log.levels.ERROR) end
+  end)
 end
 
 function M.comment(s, e)
@@ -115,6 +120,7 @@ end
 -- :Relay subcommands; registered by plugin/rex-relay.lua.
 M.subcommands = {
   ref = function(o) M.ref(o.line1, o.line2) end,
+  ["ref-focus"] = function(o) M.ref(o.line1, o.line2, true) end,
   comment = function(o) M.comment(o.line1, o.line2) end,
   send = function() M.send(false) end,
   submit = function() M.send(true) end,
@@ -130,6 +136,8 @@ function M.setup(cfg)
   local p = M.config.prefix
   vim.keymap.set("n", p .. "i", "<cmd>Relay ref<cr>", { desc = "Relay: file:line to agent" })
   vim.keymap.set("x", p .. "i", ":Relay ref<cr>", { desc = "Relay: file:range to agent" })
+  vim.keymap.set("n", p .. "I", "<cmd>Relay ref-focus<cr>", { desc = "Relay: file:line to agent, focus it" })
+  vim.keymap.set("x", p .. "I", ":Relay ref-focus<cr>", { desc = "Relay: file:range to agent, focus it" })
   vim.keymap.set("n", p .. "c", "<cmd>Relay comment<cr>", { desc = "Relay: comment line" })
   vim.keymap.set("x", p .. "c", ":Relay comment<cr>", { desc = "Relay: comment selection" })
   vim.keymap.set("n", p .. "e", "<cmd>Relay edit<cr>", { desc = "Relay: edit comment here" })

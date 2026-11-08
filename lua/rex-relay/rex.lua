@@ -60,6 +60,13 @@ function M.write(agent, text, submit)
   return true
 end
 
+-- Move Rex's focus to the agent's pane.
+function M.focus(agent)
+  local r = vim.system({ "rex", "block", "focus", "-s", vim.env.REX_SESSION, agent.block }, { text = true }):wait()
+  if r.code ~= 0 then return false, vim.trim(r.stderr ~= "" and r.stderr or ("exit " .. r.code)) end
+  return true
+end
+
 -- Call fn with the target agent: the lone agent in this tab, else the lone
 -- agent in the session, else ask.
 function M.with_agent(fn)

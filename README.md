@@ -45,6 +45,7 @@ opts = {
 | Key | Command | Does |
 | --- | --- | --- |
 | `<leader>ai` | `:[range]Relay ref` | type `path:12` (`path:12-20` for a range) at the agent's cursor; never submits |
+| `<leader>aI` | `:[range]Relay ref-focus` | same, then focus the agent's pane |
 | `<leader>ac` | `:[range]Relay comment` | comment the line / selection |
 | `<leader>ae` | `:Relay edit` | edit the comment under the cursor |
 | `<leader>ad` | `:Relay delete` | delete the comment under the cursor |
