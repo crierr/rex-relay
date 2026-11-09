@@ -1,6 +1,6 @@
 *rex-relay.txt*  Send file:line refs and review comments to agents in Rex
 
-https://github.com/crierr/rex-relay
+https://github.com/crierr/rex-relay.nvim
 
 ==============================================================================
 INTRODUCTION                                                       *rex-relay*

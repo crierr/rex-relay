@@ -1,4 +1,4 @@
-# rex-relay
+# rex-relay.nvim
 
 Send `file:line` references and review comments from Neovim to CLI coding
 agents (Claude Code, Pi, OpenCode, …) running in other panes of the same
@@ -26,7 +26,7 @@ Run `:checkhealth rex-relay` to check your setup and see the agents it finds.
 [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
-{ "crierr/rex-relay", opts = {} }
+{ "crierr/rex-relay.nvim", opts = {} }
 ```
 
 Options (defaults shown):
@@ -75,7 +75,7 @@ nvim --headless -u NONE -l tests/run.lua
 ```
 
 To use a local checkout, point lazy.nvim at it with
-`{ dir = "~/src/rex-relay", opts = {} }`. lazy doesn't build help tags for
-`dir` plugins, so run `:helptags ~/src/rex-relay/doc` once.
+`{ dir = "~/src/rex-relay.nvim", opts = {} }`. lazy doesn't build help tags for
+`dir` plugins, so run `:helptags ~/src/rex-relay.nvim/doc` once.
 
 Inspired by [herdr-nvim](https://github.com/ChmaraX/herdr-nvim).
